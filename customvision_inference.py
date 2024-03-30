@@ -4,18 +4,18 @@ from msrest.authentication import ApiKeyCredentials
 import os
 
 #training creds
-training_key = os.environ("VISION_TRAINING_KEY")
-VISION_TRAINING_ENDPOINT = os.environ("VISION_TRAINING_ENDPOINT")
+training_key = os.environ.get("VISION_TRAINING_KEY")
+VISION_TRAINING_ENDPOINT = os.environ.get("VISION_TRAINING_ENDPOINT")
 credentials = ApiKeyCredentials(in_headers={"Training-key": training_key})
 trainer = CustomVisionTrainingClient(VISION_TRAINING_ENDPOINT, credentials)
 
 # Get existing project
-project = trainer.get_project(project_id=os.environ("PROJECT_ID"))
+project = trainer.get_project(project_id=os.environ.get("PROJECT_ID"))
 
 #prediction creds
-VISION_PREDICTION_ENDPOINT = os.environ("VISION_PREDICTION_ENDPOINT")
-prediction_key=os.environ("VISION_PREDICTION_KEY")
-prediction_resource_id=os.environ("VISION_PREDICTION_RESOURCE_ID")
+VISION_PREDICTION_ENDPOINT = os.environ.get("VISION_PREDICTION_ENDPOINT")
+prediction_key=os.environ.get("VISION_PREDICTION_KEY")
+prediction_resource_id=os.environ.get("VISION_PREDICTION_RESOURCE_ID")
 
 prediction_credentials = ApiKeyCredentials(in_headers={"Prediction-key": prediction_key})
 predictor = CustomVisionPredictionClient(VISION_PREDICTION_ENDPOINT, prediction_credentials)
