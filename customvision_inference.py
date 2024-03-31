@@ -31,12 +31,16 @@ def add_data(project, tags, image_dir, ann_path):
         with open(os.path.join(image_dir, file_name), mode="rb") as image_contents:
             tagged_images_with_regions.append(ImageFileCreateEntry(name=file_name, contents=image_contents.read(), regions=regions))
 
-    upload_result = trainer.create_images_from_files(project.id, ImageFileCreateBatch(images=tagged_images_with_regions))
-    if not upload_result.is_batch_successful:
-        print("Image batch upload failed.")
-        for image in upload_result.images:
-            print("Image status: ", image.status)
-        exit(-1)
+    # upload_result = trainer.create_images_from_files(project.id, ImageFileCreateBatch(images=tagged_images_with_regions))
+    for i in range(0,len(tagged_images_with_regions),64):
+        batch = ImageFileCreateBatch(images=tagged_images_with_regions[i:i+64])
+        upload_result = trainer.create_images_from_files(project.id, batch)
+
+        if not upload_result.is_batch_successful:
+            print("Image batch upload failed.")
+            for image in upload_result.images:
+                print("Image status: ", image.status)
+            exit(-1)
 
 #training creds
 training_key = os.environ.get("VISION_TRAINING_KEY")
