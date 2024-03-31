@@ -2,7 +2,7 @@ from azure.cognitiveservices.vision.customvision.training import CustomVisionTra
 from azure.cognitiveservices.vision.customvision.prediction import CustomVisionPredictionClient
 from azure.cognitiveservices.vision.customvision.training.models import ImageFileCreateBatch, ImageFileCreateEntry, Region
 from msrest.authentication import ApiKeyCredentials
-import os, json
+import os, json, time
 
 def add_data(project, tags, image_dir, ann_path):
 
@@ -13,17 +13,17 @@ def add_data(project, tags, image_dir, ann_path):
 
     tagged_images_with_regions = []
     f =open(ann_path)
-    train_data = json.load(f)
+    data = json.load(f)
 
     category_id_name_dict = {}
-    for category in train_data["categories"]:
+    for category in data["categories"]:
         category_id_name_dict[category["id"]] = category["name"]
 
     img_id_fname_dict = {}
-    for img in train_data["images"]:
+    for img in data["images"]:
         img_id_fname_dict[img["id"]] = img["file_name"]
 
-    for ann in train_data["annotations"]:
+    for ann in data["annotations"]:
         x,y,w,h = ann["bbox"]
         tag_id = tag_dict[category_id_name_dict[ann["category_id"]]].id
         regions = [Region(tag_id=tag_id, left=x,top=y,width=w,height=h)]
@@ -36,12 +36,11 @@ def add_data(project, tags, image_dir, ann_path):
         batch = ImageFileCreateBatch(images=tagged_images_with_regions[i:i+64])
         upload_result = trainer.create_images_from_files(project.id, batch)
 
-        if not upload_result.is_batch_successful:
+        if not upload_result.is_batch_successful: 
             print("Image batch upload failed.")
             for image in upload_result.images:
                 print("Image status: ", image.status)
-            exit(-1)
-
+    return
 #training creds
 training_key = os.environ.get("VISION_TRAINING_KEY")
 VISION_TRAINING_ENDPOINT = os.environ.get("VISION_TRAINING_ENDPOINT")
@@ -53,9 +52,25 @@ project = trainer.get_project(project_id=os.environ.get("PROJECT_ID"))
 
 # fetch tags
 tags = trainer.get_tags(project.id)
-add_data(project, tags, "train", "train_new.json")
-add_data(project, tags, "valid", "valid_new.json")
+if not len(tags):
+    car_tag = trainer.create_tag(project.id, "car")
+    person_tag = trainer.create_tag(project.id, "person")
+    tags = [car_tag, person_tag]
 
+add_data(project, tags, "train", "train_new.json")
+# add_data(project, tags, "valid", "valid_new.json")
+
+##Train
+print ("Training...")
+# iteration = trainer.train_project(project.id) #creates new iteration
+iteration = trainer.get_iterations(project.id)[0] #Use last iteration
+while (iteration.status != "Completed"):
+    iteration = trainer.get_iteration(project.id, iteration.id)
+    print ("Training status: " + iteration.status)
+    print ("Waiting 10 seconds...")
+    time.sleep(10)
+
+breakpoint()
 #prediction creds
 VISION_PREDICTION_ENDPOINT = os.environ.get("VISION_PREDICTION_ENDPOINT")
 prediction_key=os.environ.get("VISION_PREDICTION_KEY")
