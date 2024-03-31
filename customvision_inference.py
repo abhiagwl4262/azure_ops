@@ -70,21 +70,27 @@ while (iteration.status != "Completed"):
     print ("Waiting 10 seconds...")
     time.sleep(10)
 
-breakpoint()
+prediction_resource_id=os.environ.get("VISION_PREDICTION_RESOURCE_ID")
+
+#The iteration is now trained. Publish it to the project endpoint
+try:
+    trainer.publish_iteration(project.id, iteration.id, iteration.name, prediction_resource_id)
+    print ("Done!")
+except Exception as e:
+    print(e)
+
 #prediction creds
 VISION_PREDICTION_ENDPOINT = os.environ.get("VISION_PREDICTION_ENDPOINT")
 prediction_key=os.environ.get("VISION_PREDICTION_KEY")
-prediction_resource_id=os.environ.get("VISION_PREDICTION_RESOURCE_ID")
-
 prediction_credentials = ApiKeyCredentials(in_headers={"Prediction-key": prediction_key})
 predictor = CustomVisionPredictionClient(VISION_PREDICTION_ENDPOINT, prediction_credentials)
 
 
 #inference
-publish_iteration_name="Iteration1"
 with open("valid/Abee1_12_png.rf.3415fd50c0de26c1ad6e3c2fc391f47a.jpg", mode="rb") as test_data:
-    results = predictor.detect_image(project.id, publish_iteration_name, test_data)
+    results = predictor.detect_image(project.id, iteration.name, test_data)
 
-# Display the results.    
+# Display the results.
 for prediction in results.predictions:
-    print("\t" + prediction.tag_name + ": {0:.2f}% bbox.left = {1:.2f}, bbox.top = {2:.2f}, bbox.width = {3:.2f}, bbox.height = {4:.2f}".format(prediction.probability * 100, prediction.bounding_box.left, prediction.bounding_box.top, prediction.bounding_box.width, prediction.bounding_box.height))
+    if prediction.probability > 0.5:
+        print("\t" + prediction.tag_name + ": {0:.2f}% bbox.left = {1:.2f}, bbox.top = {2:.2f}, bbox.width = {3:.2f}, bbox.height = {4:.2f}".format(prediction.probability * 100, prediction.bounding_box.left, prediction.bounding_box.top, prediction.bounding_box.width, prediction.bounding_box.height))
