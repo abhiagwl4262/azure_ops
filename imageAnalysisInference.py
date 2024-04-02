@@ -19,8 +19,6 @@ params = urllib.parse.urlencode(
     {
         # Request parameters
         "model-name": "customv3",
-        # "language": "en",
-        # "gender-neutral-caption": "False",
     }
 )
 
