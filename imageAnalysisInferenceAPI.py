@@ -71,7 +71,7 @@ def plot(results, img_path):
     plt.show()
 
 
-def infer(image_path, conf_threshold=0.5, plot=False):
+def infer(image_path, conf_threshold=0.5, plot=False, out_path="output.txt"):
     if not os.path.exists(image_path):
         raise FileNotFoundError(f"{image_path} does not exist!")
 
@@ -101,7 +101,7 @@ def infer(image_path, conf_threshold=0.5, plot=False):
         print(detections)
         if plot:
             plot(detections, image_path)
-        write_predictions(detections, "output.txt")
+        write_predictions(detections, out_path)
     except requests.exceptions.RequestException as e:
         print("Request failed: ", e)
 
