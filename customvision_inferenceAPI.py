@@ -5,9 +5,6 @@ from PIL import Image
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
-
-os.environ["VISION_PREDICTION_KEY"] = "5deb696fc78948469145457b4d52fe11"
-
 def plot(results, img_path):
     # Load image from URL
     image = Image.open(img_path)
