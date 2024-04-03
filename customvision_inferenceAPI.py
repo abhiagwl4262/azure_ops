@@ -1,12 +1,13 @@
 import requests
 import json
+import os
 
 prediction_url = "https://customobjectdetection-prediction.cognitiveservices.azure.com/customvision/v3.0/Prediction/8f29a6c3-5b39-4999-92b6-e5d9f3573ec9/detect/iterations/Iteration%204/image"
 
 headers = {
     # Request headers
     "Content-Type": "application/octet-stream",
-    "Prediction-Key": "5deb696fc78948469145457b4d52fe11"
+    "Prediction-Key": os.environ.get("VISION_PREDICTION_KEY")
 }
 # The path to your image file
 image_path = "valid/Abee1_12_png.rf.3415fd50c0de26c1ad6e3c2fc391f47a.jpg"
