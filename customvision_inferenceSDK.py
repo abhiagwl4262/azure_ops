@@ -90,6 +90,7 @@ predictor = CustomVisionPredictionClient(VISION_PREDICTION_ENDPOINT, prediction_
 with open("valid/Abee1_12_png.rf.3415fd50c0de26c1ad6e3c2fc391f47a.jpg", mode="rb") as test_data:
     results = predictor.detect_image(project.id, iteration.name, test_data)
 
+breakpoint()
 # Display the results.
 for prediction in results.predictions:
     if prediction.probability > 0.5:
