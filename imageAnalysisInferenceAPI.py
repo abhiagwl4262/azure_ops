@@ -20,19 +20,19 @@ def plot(results, img_path):
         tag = prediction['tags'][0]['name']
         probability = prediction['tags'][0]['confidence']
         bbox = prediction['boundingBox']
-        
+
         # Convert bounding box coordinates from relative to absolute
         left = bbox['x'] * width
         top = bbox['y'] * height
         right = left + bbox['w'] * width
         bottom = top + bbox['h'] * height
-        
+
         # Create a rectangle patch
         rect = patches.Rectangle((left, top), right - left, bottom - top, linewidth=1, edgecolor='r', facecolor='none')
-        
+
         # Add the patch to the plot
         plt.gca().add_patch(rect)
-        
+
         # Add text label
         plt.text(left, top - 5, f'{tag} ({probability:.2f})', color='r', fontsize=10, backgroundcolor='w')
     
