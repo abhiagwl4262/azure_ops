@@ -71,7 +71,7 @@ def plot(results, img_path):
     plt.show()
 
 
-def infer(image_path, conf_threshold=0.5):
+def infer(image_path, conf_threshold=0.5, plot=False):
     if not os.path.exists(image_path):
         raise FileNotFoundError(f"{image_path} does not exist!")
 
@@ -99,7 +99,8 @@ def infer(image_path, conf_threshold=0.5):
             if detection["tags"][0]["confidence"] > conf_threshold:
                 detections.append(detection)
         print(detections)
-        # plot(detections, image_path)
+        if plot:
+            plot(detections, image_path)
         with open("response.json", "w") as fw:
             fw.write(json.dumps(json_objs, indent=4))
 

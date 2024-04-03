@@ -55,7 +55,7 @@ def plot(results, img_path):
     plt.show()
 
 
-def infer(image_path, conf_threshold=0.5):
+def infer(image_path, conf_threshold=0.5, plot=False):
     prediction_url = "https://customobjectdetection-prediction.cognitiveservices.azure.com/customvision/v3.0/Prediction/8f29a6c3-5b39-4999-92b6-e5d9f3573ec9/detect/iterations/Iteration%204/image"
 
     headers = {
@@ -80,7 +80,8 @@ def infer(image_path, conf_threshold=0.5):
                     print(
                         f"Tag: {prediction['tagName']}, Probability: {prediction['probability']}"
                     )
-            # plot(filtered_preds, image_path)
+            if plot:
+                plot(filtered_preds, image_path)
         else:
             print(
                 f"Prediction failed with status code {response.status_code}: {response.text}"
