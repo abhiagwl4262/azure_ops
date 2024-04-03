@@ -101,9 +101,7 @@ def infer(image_path, conf_threshold=0.5, plot=False):
         print(detections)
         if plot:
             plot(detections, image_path)
-        with open("response.json", "w") as fw:
-            fw.write(json.dumps(json_objs, indent=4))
-
+        write_predictions(detections, "output.txt")
     except requests.exceptions.RequestException as e:
         print("Request failed: ", e)
 
@@ -115,6 +113,7 @@ if __name__ == "__main__":
     ), "OCP_APIM_SUBSCRIPTION_KEY environment variable is not set."
 
     conf_threshold = 0.5
-    image_path = "Image 2024-03-26 at 09.56.02.jpeg"
+    # image_path = "Image 2024-03-26 at 09.56.02.jpeg"
+    image_path = "Image 2024-03-26 at 22.08.49.jpeg"
 
     infer(image_path, conf_threshold)
