@@ -1,0 +1,43 @@
+{
+    "customModelResult": {
+        "objectsResult": {
+            "values": [
+                {
+                    "id": "1",
+                    "boundingBox": {
+                        "x": 444,
+                        "y": 215,
+                        "w": 173,
+                        "h": 103
+                    },
+                    "tags": [
+                        {
+                            "name": "car",
+                            "confidence": 0.28564453125
+                        }
+                    ]
+                },
+                {
+                    "id": "2",
+                    "boundingBox": {
+                        "x": 697,
+                        "y": 203,
+                        "w": 104,
+                        "h": 97
+                    },
+                    "tags": [
+                        {
+                            "name": "car",
+                            "confidence": 0.2486572265625
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    "modelVersion": "2023-02-01-preview",
+    "metadata": {
+        "width": 1280,
+        "height": 827
+    }
+}
