@@ -5,6 +5,22 @@ from PIL import Image
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
+def write_predictions(results, out_path):
+
+    f = open(out_path, "w")
+    for prediction in results:
+        tag = prediction["tagName"]
+        probability = prediction["probability"]
+        bbox = prediction["boundingBox"]
+
+        # Convert bounding box coordinates from relative to absolute
+        x = bbox["left"]
+        y = bbox["top"]
+        w = bbox["width"]
+        h = bbox["height"]
+        pred_line = ",".join([tag, str(probability), str(x), str(y), str(w), str(h)]) + "\n"
+        f.write(pred_line)
+
 def plot(results, img_path):
     # Load image from URL
     image = Image.open(img_path)
@@ -55,7 +71,7 @@ def plot(results, img_path):
     plt.show()
 
 
-def infer(image_path, conf_threshold=0.5, plot=False):
+def infer(image_path, conf_threshold=0.5, plot=False, out_path="output.txt"):
     prediction_url = "https://customobjectdetection-prediction.cognitiveservices.azure.com/customvision/v3.0/Prediction/8f29a6c3-5b39-4999-92b6-e5d9f3573ec9/detect/iterations/Iteration%204/image"
 
     headers = {
@@ -82,6 +98,7 @@ def infer(image_path, conf_threshold=0.5, plot=False):
                     )
             if plot:
                 plot(filtered_preds, image_path)
+            write_predictions(filtered_preds, out_path)
         else:
             print(
                 f"Prediction failed with status code {response.status_code}: {response.text}"
@@ -92,6 +109,7 @@ def infer(image_path, conf_threshold=0.5, plot=False):
 
 if __name__ == "__main__":
     conf_threshold = 0.5
-    image_path = "Image 2024-03-26 at 09.56.02.jpeg"
+    # image_path = "Image 2024-03-26 at 09.56.02.jpeg"
+    image_path = "Image 2024-03-26 at 22.08.49.jpeg"
 
     infer(image_path, conf_threshold)
