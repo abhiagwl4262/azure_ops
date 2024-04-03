@@ -5,9 +5,21 @@ from PIL import Image
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
+def write_predictions(results, out_path):
 
-os.environ["OCP_APIM_SUBSCRIPTION_KEY"] = "d2f9a5fe4a54466a8feeb0e741975740"
+    f = open(out_path, "w")
+    for prediction in results:
+        tag = prediction['tags'][0]['name']
+        probability = prediction['tags'][0]['confidence']
+        bbox = prediction['boundingBox']
 
+        # Convert bounding box coordinates from relative to absolute
+        x = bbox['x']
+        y = bbox['y']
+        w = bbox['w']
+        h = bbox['h']
+        pred_line = ",".join([tag, str(probability), str(x), str(y), str(w), str(h)]) + "\n"
+        f.write(pred_line)
 
 def plot(results, img_path):
     # Load image from URL
