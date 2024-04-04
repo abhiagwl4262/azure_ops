@@ -5,7 +5,10 @@ from PIL import Image
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
-def write_predictions(results, out_path):
+def write_predictions(results, img_path, out_path):
+
+    image = Image.open(img_path)
+    width, height = image.size
 
     f = open(out_path, "w")
     for prediction in results:
@@ -14,11 +17,11 @@ def write_predictions(results, out_path):
         bbox = prediction["boundingBox"]
 
         # Convert bounding box coordinates from relative to absolute
-        x = bbox["left"]
-        y = bbox["top"]
-        w = bbox["width"]
-        h = bbox["height"]
-        pred_line = ",".join([tag, str(probability), str(x), str(y), str(w), str(h)]) + "\n"
+        x = bbox["left"]*width
+        y = bbox["top"]*height
+        w = bbox["width"]*width
+        h = bbox["height"]*height
+        pred_line = ",".join([tag, str(probability), str(int(x)), str(int(y)), str(int(w)), str(int(h))]) + "\n"
         f.write(pred_line)
 
 def plot(results, img_path):
@@ -98,7 +101,7 @@ def infer(image_path, conf_threshold=0.5, plot=False, out_path="output.txt"):
                     )
             if plot:
                 plot(filtered_preds, image_path)
-            write_predictions(filtered_preds, out_path)
+            write_predictions(filtered_preds, image_path, out_path)
         else:
             print(
                 f"Prediction failed with status code {response.status_code}: {response.text}"
