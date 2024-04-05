@@ -28,7 +28,7 @@ def calculate_iou(box1, box2):
     iou = intersection_area / union_area
     return iou
 
-def calculate_detection_metric(pred, gt, iou_threshold=0.5):
+def get_tpfpfn(pred, gt, iou_threshold=0.5):
     """
     Calculate object detection metric given predictions and ground truth.
     """
@@ -59,20 +59,26 @@ def calculate_detection_metric(pred, gt, iou_threshold=0.5):
     
     fn = num_gt - tp
     
+    return tp, fp, fn
+
+def get_prec_rec(tp, fp, fn):
     precision = tp / (tp + fp) if (tp + fp) > 0 else 0
     recall = tp / (tp + fn) if (tp + fn) > 0 else 0
     
     return precision, recall
 
-# Example usage
-pred = [
-    ('car', 0.83984375, 0.24296875, 0.47158403869407495, 0.0953125, 0.1003627569528416),
-    ('person', 0.8271484375, 0.6203125, 0.4619105199516324, 0.02734375, 0.08101571946795647)
-]
-gt = [
-    ('car', 0.83984375, 0.24296875, 0.47158403869407495, 0.0953125, 0.1003627569528416),
-    ('person', 0.8271484375, 0.6203125, 0.4619105199516324, 0.02734375, 0.08101571946795647)
-]
-precision, recall = calculate_detection_metric(pred, gt)
-print("Precision:", precision)
-print("Recall:", recall)
+if __name__ == "__main__":
+    # Example usage
+    pred = [
+        ('car', 0.83984375, 0.24296875, 0.47158403869407495, 0.0953125, 0.1003627569528416),
+        ('person', 0.8271484375, 0.6203125, 0.4619105199516324, 0.02734375, 0.08101571946795647)
+    ]
+    gt = [
+        ('car', 0.83984375, 0.24296875, 0.47158403869407495, 0.0953125, 0.1003627569528416),
+        ('person', 0.8271484375, 0.6203125, 0.4619105199516324, 0.02734375, 0.08101571946795647)
+    ]
+    
+    tp, fp, fn = get_tpfpfn(pred, gt)
+    precision, recall = get_prec_rec(tp, fp, fn)
+    print("Precision:", precision)
+    print("Recall:", recall)
