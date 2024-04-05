@@ -97,13 +97,14 @@ def infer(image_path, conf_threshold=0.5, plot=False, out_path="output.txt"):
         response.raise_for_status
         json_objs = response.json()
         detections = []
-        for detection in json_objs["customModelResult"]["objectsResult"]["values"]:
-            if detection["tags"][0]["confidence"] > conf_threshold:
-                detections.append(detection)
-        print(detections)
-        if plot:
-            plot(detections, image_path)
-        write_predictions(detections, image_path, out_path)
+        if "objectsResult" in json_objs["customModelResult"]:
+            for detection in json_objs["customModelResult"]["objectsResult"]["values"]:
+                if detection["tags"][0]["confidence"] > conf_threshold:
+                    detections.append(detection)
+            print(detections)
+            if plot:
+                plot(detections, image_path)
+            write_predictions(detections, image_path, out_path)
     except requests.exceptions.RequestException as e:
         print("Request failed: ", e)
     return len(detections)
