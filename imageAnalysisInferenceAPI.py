@@ -5,7 +5,9 @@ from PIL import Image
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
-def write_predictions(results, out_path):
+def write_predictions(results, img_path, out_path):
+    image = Image.open(img_path)
+    width, height = image.size
 
     f = open(out_path, "w")
     for prediction in results:
@@ -14,10 +16,10 @@ def write_predictions(results, out_path):
         bbox = prediction['boundingBox']
 
         # Convert bounding box coordinates from relative to absolute
-        x = bbox['x']
-        y = bbox['y']
-        w = bbox['w']
-        h = bbox['h']
+        x = bbox['x']/float(width)
+        y = bbox['y']/float(height)
+        w = bbox['w']/float(width)
+        h = bbox['h']/float(height)
         pred_line = ",".join([tag, str(probability), str(x), str(y), str(w), str(h)]) + "\n"
         f.write(pred_line)
 
@@ -101,7 +103,7 @@ def infer(image_path, conf_threshold=0.5, plot=False, out_path="output.txt"):
         print(detections)
         if plot:
             plot(detections, image_path)
-        write_predictions(detections, out_path)
+        write_predictions(detections, image_path, out_path)
     except requests.exceptions.RequestException as e:
         print("Request failed: ", e)
 
