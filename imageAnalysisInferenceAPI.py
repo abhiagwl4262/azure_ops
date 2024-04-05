@@ -1,5 +1,4 @@
-import os
-import json
+import os, glob
 import requests
 from PIL import Image
 import matplotlib.pyplot as plt
@@ -137,3 +136,8 @@ if __name__ == "__main__":
     if not os.path.isdir(args.source):
         out_path = os.path.join(args.output_dir, args.source.replace(".jpeg", ".txt"))
         infer(args.source, args.conf, out_path=out_path)
+    else:
+        img_paths = glob.glob(args.source + "/*.jpg")
+        for img_path in img_paths:
+            out_path = os.path.join(args.output_dir, os.path.basename(img_path).replace(".jpg", ".txt"))
+            infer(img_path, args.conf, out_path=out_path)
