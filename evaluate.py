@@ -1,4 +1,11 @@
 import numpy as np
+import os, glob
+from tqdm import tqdm
+
+class_dict = {
+    "car" : 0,
+    "person": 1
+}
 
 def calculate_iou(box1, box2):
     """
@@ -67,18 +74,47 @@ def get_prec_rec(tp, fp, fn):
     
     return precision, recall
 
-if __name__ == "__main__":
-    # Example usage
-    pred = [
-        ('car', 0.83984375, 0.24296875, 0.47158403869407495, 0.0953125, 0.1003627569528416),
-        ('person', 0.8271484375, 0.6203125, 0.4619105199516324, 0.02734375, 0.08101571946795647)
-    ]
-    gt = [
-        ('car', 0.83984375, 0.24296875, 0.47158403869407495, 0.0953125, 0.1003627569528416),
-        ('person', 0.8271484375, 0.6203125, 0.4619105199516324, 0.02734375, 0.08101571946795647)
-    ]
+def load_txt(fpath, parser):
+    """Parse a detection line and return class_id, confidence, bbox."""
+    lines = open(fpath).readlines()
+    detections = []
+    for line in lines:
+        parts = line.strip().split(parser)        
+        class_id = parts[0]
+        confidence = 1.0
+        if len(parts) == 6:
+            class_id = str(class_dict[class_id])
+            confidence = float(parts[1])        
+        bbox = [float(x) for x in parts[-4:]]
+        detection = tuple([class_id]+[confidence]+bbox)
+        detections.append(detection)
+    return detections
     
-    tp, fp, fn = get_tpfpfn(pred, gt)
-    precision, recall = get_prec_rec(tp, fp, fn)
+def parse_args():
+    import argparse
+    parser = argparse.ArgumentParser("argument parser")
+    parser.add_argument("--pred-dir", type=str,     
+                help="It can be a path to image or path to folder of images")
+    parser.add_argument("--gt-dir", type=str, 
+                help="It can be a path to image or path to folder of images")
+    parser.add_argument("--conf", type=float, default=0.5,
+                help="confidence threshold")
+    args = parser.parse_args()
+    return args
+
+if __name__ == "__main__":
+
+    args = parse_args()
+    gt_paths = glob.glob(args.gt_dir + "/*.txt")
+    pred_fnames = os.listdir(args.pred_dir)
+    for gt_path in tqdm(gt_paths):
+        fname = os.path.basename(gt_path)
+        if fname in pred_fnames:
+            gts = load_txt(gt_path, " ")
+            preds = load_txt(os.path.join(args.pred_dir, fname), ",")
+            breakpoint()
+            tp, fp, fn = get_tpfpfn(preds, gts, iou_threshold=0.5)
+            precision, recall = get_prec_rec(tp, fp, fn)
+
     print("Precision:", precision)
     print("Recall:", recall)
