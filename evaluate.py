@@ -107,14 +107,19 @@ if __name__ == "__main__":
     args = parse_args()
     gt_paths = glob.glob(args.gt_dir + "/*.txt")
     pred_fnames = os.listdir(args.pred_dir)
+    tps = 0
+    fps = 0
+    fns = 0
     for gt_path in tqdm(gt_paths):
         fname = os.path.basename(gt_path)
         if fname in pred_fnames:
             gts = load_txt(gt_path, " ")
             preds = load_txt(os.path.join(args.pred_dir, fname), ",")
-            breakpoint()
             tp, fp, fn = get_tpfpfn(preds, gts, iou_threshold=0.5)
-            precision, recall = get_prec_rec(tp, fp, fn)
+            tps += tp
+            fps += fp
+            fns += fn
+    precision, recall = get_prec_rec(tps, fps, fns)
 
     print("Precision:", precision)
     print("Recall:", recall)
