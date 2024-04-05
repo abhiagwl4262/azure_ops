@@ -107,6 +107,17 @@ def infer(image_path, conf_threshold=0.5, plot=False, out_path="output.txt"):
     except requests.exceptions.RequestException as e:
         print("Request failed: ", e)
 
+def parse_args():
+    import argparse
+    parser = argparse.ArgumentParser("argument parser")
+    parser.add_argument("--source", type=str, 
+                help="It can be a path to image or path to folder of images")
+    parser.add_argument("--conf", type=float, default=0.5,
+                help="confidence threshold")
+    parser.add_argument("--output-dir", type=str, default="imageAnalysisOutput",
+                help="It can be a path to image or path to folder of images")
+    args = parser.parse_args()
+    return args
 
 if __name__ == "__main__":
     subscription_key = os.environ.get("OCP_APIM_SUBSCRIPTION_KEY")
@@ -114,8 +125,9 @@ if __name__ == "__main__":
         subscription_key
     ), "OCP_APIM_SUBSCRIPTION_KEY environment variable is not set."
 
-    conf_threshold = 0.5
-    # image_path = "Image 2024-03-26 at 09.56.02.jpeg"
-    image_path = "Image 2024-03-26 at 22.08.49.jpeg"
+    args = parse_args()
 
-    infer(image_path, conf_threshold)
+    os.makedirs(args.output_dir, exist_ok=True)
+    if not os.path.isdir(args.source):
+        out_path = os.path.join(args.output_dir, args.source.replace(".jpeg", ".txt"))
+        infer(args.source, args.conf, out_path=out_path)
