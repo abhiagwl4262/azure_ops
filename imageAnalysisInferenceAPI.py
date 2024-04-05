@@ -120,6 +120,12 @@ def parse_args():
     return args
 
 if __name__ == "__main__":
+    """
+    to run on an image - 
+        python imageAnalysisInferenceAPI.py --source <image_path>
+    to run on a folder of images - 
+        python imageAnalysisInferenceAPI.py --source <image_dir>    
+    """
     subscription_key = os.environ.get("OCP_APIM_SUBSCRIPTION_KEY")
     assert (
         subscription_key
