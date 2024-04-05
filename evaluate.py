@@ -103,7 +103,10 @@ def parse_args():
     return args
 
 if __name__ == "__main__":
-
+    """
+    run command - 
+    python evaluate.py --pred-dir customVisionOutput --gt-dir ../JSON2YOLO/new_dir/labels/val
+    """    
     args = parse_args()
     gt_paths = glob.glob(args.gt_dir + "/*.txt")
     pred_fnames = os.listdir(args.pred_dir)
