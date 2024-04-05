@@ -105,6 +105,7 @@ def infer(image_path, conf_threshold=0.5, plot=False, out_path="output.txt"):
         write_predictions(detections, image_path, out_path)
     except requests.exceptions.RequestException as e:
         print("Request failed: ", e)
+    return len(detections)
 
 def parse_args():
     import argparse
@@ -131,13 +132,17 @@ if __name__ == "__main__":
     ), "OCP_APIM_SUBSCRIPTION_KEY environment variable is not set."
 
     args = parse_args()
+    det_count = 0
 
     os.makedirs(args.output_dir, exist_ok=True)
     if not os.path.isdir(args.source):
         out_path = os.path.join(args.output_dir, args.source.replace(".jpeg", ".txt"))
-        infer(args.source, args.conf, out_path=out_path)
+        num_dets = infer(args.source, args.conf, out_path=out_path)
+        det_count += num_dets
     else:
         img_paths = glob.glob(args.source + "/*.jpg")
         for img_path in img_paths:
             out_path = os.path.join(args.output_dir, os.path.basename(img_path).replace(".jpg", ".txt"))
-            infer(img_path, args.conf, out_path=out_path)
+            num_dets = infer(img_path, args.conf, out_path=out_path)
+            det_count += num_dets
+    print("total detection :: ", det_count)
