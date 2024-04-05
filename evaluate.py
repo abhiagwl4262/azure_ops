@@ -79,7 +79,7 @@ def load_txt(fpath, parser):
     lines = open(fpath).readlines()
     detections = []
     for line in lines:
-        parts = line.strip().split(parser)        
+        parts = line.strip("\n").split(parser)
         class_id = parts[0]
         confidence = 1.0
         if len(parts) == 6:
@@ -116,7 +116,7 @@ if __name__ == "__main__":
     for gt_path in tqdm(gt_paths):
         fname = os.path.basename(gt_path)
         if fname in pred_fnames:
-            gts = load_txt(gt_path, " ")
+            gts = load_txt(gt_path, ",")
             preds = load_txt(os.path.join(args.pred_dir, fname), ",")
             tp, fp, fn = get_tpfpfn(preds, gts, iou_threshold=0.5)
             tps += tp
