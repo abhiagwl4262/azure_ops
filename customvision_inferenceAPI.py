@@ -81,6 +81,7 @@ def infer(image_path, conf_threshold=0.5, plot=False, out_path="output.txt"):
     }
 
     # Read the image file in binary mode
+    print(image_path)
     with open(image_path, "rb") as image_file:
         data = image_file.read()
 
@@ -116,6 +117,8 @@ def parse_args():
                 help="confidence threshold")
     parser.add_argument("--output-dir", type=str, default="customVisionOutput",
                 help="It can be a path to image or path to folder of images")
+    parser.add_argument("--img-ext", type=str, default=".jpg",
+                help="file extension of image files")
     args = parser.parse_args()
     return args
 
@@ -135,9 +138,9 @@ if __name__ == "__main__":
         num_dets = infer(args.source, args.conf, out_path=out_path)
         det_count += num_dets
     else:
-        img_paths = glob.glob(args.source + "/*.jpg")
+        img_paths = glob.glob(args.source + f"/*{args.img_ext}")
         for img_path in img_paths:
-            out_path = os.path.join(args.output_dir, os.path.basename(img_path).replace(".jpg", ".txt"))
+            out_path = os.path.join(args.output_dir, os.path.basename(img_path).replace(args.img_ext, ".txt"))
             num_dets = infer(img_path, args.conf, out_path=out_path)
             det_count += num_dets
     print("total detection :: ", det_count)
