@@ -1,6 +1,6 @@
 import requests
 import json
-import os
+import os, glob
 from PIL import Image
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -107,9 +107,33 @@ def infer(image_path, conf_threshold=0.5, plot=False, out_path="output.txt"):
         print("[Errno {0}] {1}".format(e.errno, e.strerror))
 
 
-if __name__ == "__main__":
-    conf_threshold = 0.5
-    # image_path = "Image 2024-03-26 at 09.56.02.jpeg"
-    image_path = "Image 2024-03-26 at 22.08.49.jpeg"
+def parse_args():
+    import argparse
+    parser = argparse.ArgumentParser("argument parser")
+    parser.add_argument("--source", type=str, 
+                help="It can be a path to image or path to folder of images")
+    parser.add_argument("--conf", type=float, default=0.5,
+                help="confidence threshold")
+    parser.add_argument("--output-dir", type=str, default="customVisionOutput",
+                help="It can be a path to image or path to folder of images")
+    args = parser.parse_args()
+    return args
 
-    infer(image_path, conf_threshold)
+if __name__ == "__main__":
+    """
+    to run on an image - 
+        python customvision_inferenceAPI.py --source <image_path>
+    to run on a folder of images - 
+        python customvision_inferenceAPI.py --source <image_dir>    
+    """
+    args = parse_args()
+
+    os.makedirs(args.output_dir, exist_ok=True)
+    if not os.path.isdir(args.source):
+        out_path = os.path.join(args.output_dir, args.source.replace(".jpeg", ".txt"))
+        infer(args.source, args.conf, out_path=out_path)
+    else:
+        img_paths = glob.glob(args.source + "/*.jpg")
+        for img_path in img_paths:
+            out_path = os.path.join(args.output_dir, os.path.basename(img_path).replace(".jpg", ".txt"))
+            infer(img_path, args.conf, out_path=out_path)
