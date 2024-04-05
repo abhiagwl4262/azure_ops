@@ -310,7 +310,7 @@ def convert_coco_json(json_dir="../coco/annotations/", use_segments=False, cls91
             with open((fn / f).with_suffix(".txt"), "a") as file:
                 for i in range(len(bboxes)):
                     line = (*(segments[i] if use_segments else bboxes[i]),)  # cls, box or segments
-                    file.write(("%g," * len(line)).rstrip() % line + "\n")
+                    file.write((("%g," * len(line)).rstrip() % line).strip(",") + "\n")
 
 
 def min_index(arr1, arr2):
