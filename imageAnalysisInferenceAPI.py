@@ -4,23 +4,27 @@ from PIL import Image
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
+
 def write_predictions(results, img_path, out_path):
     image = Image.open(img_path)
     width, height = image.size
 
     f = open(out_path, "w")
     for prediction in results:
-        tag = prediction['tags'][0]['name']
-        probability = prediction['tags'][0]['confidence']
-        bbox = prediction['boundingBox']
+        tag = prediction["tags"][0]["name"]
+        probability = prediction["tags"][0]["confidence"]
+        bbox = prediction["boundingBox"]
 
         # Convert bounding box coordinates from relative to absolute
-        x = bbox['x']/float(width)
-        y = bbox['y']/float(height)
-        w = bbox['w']/float(width)
-        h = bbox['h']/float(height)
-        pred_line = ",".join([tag, str(probability), str(x), str(y), str(w), str(h)]) + "\n"
+        x = bbox["x"] / float(width)
+        y = bbox["y"] / float(height)
+        w = bbox["w"] / float(width)
+        h = bbox["h"] / float(height)
+        pred_line = (
+            ",".join([tag, str(probability), str(x), str(y), str(w), str(h)]) + "\n"
+        )
         f.write(pred_line)
+
 
 def plot(results, img_path):
     # Load image from URL
@@ -107,26 +111,36 @@ def infer(image_path, conf_threshold=0.5, plot=False, out_path="output.txt"):
         print("Request failed: ", e)
     return len(detections)
 
+
 def parse_args():
     import argparse
+
     parser = argparse.ArgumentParser("argument parser")
-    parser.add_argument("--source", type=str, 
-                help="It can be a path to image or path to folder of images")
-    parser.add_argument("--conf", type=float, default=0.5,
-                help="confidence threshold")
-    parser.add_argument("--output-dir", type=str, default="imageAnalysisOutput",
-                help="It can be a path to image or path to folder of images")
-    parser.add_argument("--img-ext", type=str, default=".jpg",
-                help="file extension of image files")
+    parser.add_argument(
+        "--source",
+        type=str,
+        help="It can be a path to image or path to folder of images",
+    )
+    parser.add_argument("--conf", type=float, default=0.5, help="confidence threshold")
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        default="imageAnalysisOutput",
+        help="It can be a path to image or path to folder of images",
+    )
+    parser.add_argument(
+        "--img-ext", type=str, default=".jpg", help="file extension of image files"
+    )
     args = parser.parse_args()
     return args
 
+
 if __name__ == "__main__":
     """
-    to run on an image - 
+    to run on an image -
         python imageAnalysisInferenceAPI.py --source <image_path>
-    to run on a folder of images - 
-        python imageAnalysisInferenceAPI.py --source <image_dir>    
+    to run on a folder of images -
+        python imageAnalysisInferenceAPI.py --source <image_dir>
     """
     subscription_key = os.environ.get("OCP_APIM_SUBSCRIPTION_KEY")
     assert (
@@ -138,13 +152,18 @@ if __name__ == "__main__":
 
     os.makedirs(args.output_dir, exist_ok=True)
     if not os.path.isdir(args.source):
-        out_path = os.path.join(args.output_dir, args.source.replace(args.img_ext, ".txt"))
+        out_path = os.path.join(
+            args.output_dir, args.source.replace(args.img_ext, ".txt")
+        )
         num_dets = infer(args.source, args.conf, out_path=out_path)
         det_count += num_dets
     else:
         img_paths = glob.glob(args.source + f"/*{args.img_ext}")
         for img_path in img_paths:
-            out_path = os.path.join(args.output_dir, os.path.basename(img_path).replace(args.img_ext, ".txt"))
+            out_path = os.path.join(
+                args.output_dir,
+                os.path.basename(img_path).replace(args.img_ext, ".txt"),
+            )
             num_dets = infer(img_path, args.conf, out_path=out_path)
             det_count += num_dets
     print("total detection :: ", det_count)

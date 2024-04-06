@@ -19,6 +19,7 @@ VISION_PREDICTION_ENDPOINT = os.environ.get("VISION_PREDICTION_ENDPOINT")
 PREDICTION_KEY = os.environ.get("VISION_PREDICTION_KEY")
 PROJECT_ID = os.environ.get("PROJECT_ID")
 
+
 def add_BG_data(trainer, project, tags, image_dir, pred_dir):
     print("Adding images...")
     tag_dict = {}
@@ -29,13 +30,15 @@ def add_BG_data(trainer, project, tags, image_dir, pred_dir):
     for fname in os.listdir(image_dir):
         fname_txt = fname.replace(".png", ".txt")
         if fname_txt in os.listdir(pred_dir):
-            ann_path = os.path.join(pred_dir, fname_txt)            
+            ann_path = os.path.join(pred_dir, fname_txt)
             lines = open(ann_path).readlines()
             for line in lines:
                 parts = line.strip("\n").split(",")
                 bbox = [float(x) for x in parts[-4:]]
-                x, y, w, h = bbox                
-                regions = [Region(tag_id=tag_dict["bg"].id, left=x, top=y, width=w, height=h)]
+                x, y, w, h = bbox
+                regions = [
+                    Region(tag_id=tag_dict["bg"].id, left=x, top=y, width=w, height=h)
+                ]
                 with open(os.path.join(image_dir, fname), mode="rb") as image_contents:
                     tagged_images_with_regions.append(
                         ImageFileCreateEntry(
@@ -51,6 +54,7 @@ def add_BG_data(trainer, project, tags, image_dir, pred_dir):
             print("Image batch upload failed.")
             for image in upload_result.images:
                 print("Image status: ", image.status)
+
 
 def add_data(project, tags, image_dir, ann_path):
     print("Adding images...")
@@ -110,8 +114,14 @@ def training_func():
 
     # add_data(project, tags, "train", "train_new.json")
     # add_data(project, tags, "valid", "valid_new.json")
-    # bg_tag = trainer.create_tag(project.id, "bg")    
-    add_BG_data(trainer, project, tags, "Security_Camera_Clips/FalsePositives/images", "customVisionOutput")
+    # bg_tag = trainer.create_tag(project.id, "bg")
+    add_BG_data(
+        trainer,
+        project,
+        tags,
+        "Security_Camera_Clips/FalsePositives/images",
+        "customVisionOutput",
+    )
     ##Train
     return
     print("Training...")

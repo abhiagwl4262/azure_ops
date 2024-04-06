@@ -1,128 +1,130 @@
-import numpy as np
-import os, glob
-from tqdm import tqdm
+import os
+import json
 
-class_dict = {
-    "car" : 0,
-    "person": 1
-}
 
-def calculate_iou(box1, box2):
+def calculate_iou(boxA, boxB):
     """
     Calculate the Intersection over Union (IoU) of two bounding boxes.
     """
-    x1, y1, w1, h1 = box1
-    x2, y2, w2, h2 = box2
-    
-    # Calculate intersection coordinates
-    x_intersection = max(x1, x2)
-    y_intersection = max(y1, y2)
-    w_intersection = min(x1 + w1, x2 + w2) - x_intersection
-    h_intersection = min(y1 + h1, y2 + h2) - y_intersection
-    
-    if w_intersection <= 0 or h_intersection <= 0:
-        return 0.0
-    
-    # Calculate intersection area
-    intersection_area = w_intersection * h_intersection
-    
-    # Calculate union area
-    box1_area = w1 * h1
-    box2_area = w2 * h2
-    union_area = box1_area + box2_area - intersection_area
-    
-    # Calculate IoU
-    iou = intersection_area / union_area
+    xA, yA, xB, yB = (
+        max(boxA[0], boxB[0]),
+        max(boxA[1], boxB[1]),
+        min(boxA[2], boxB[2]),
+        min(boxA[3], boxB[3]),
+    )
+    interArea = max(0, xB - xA) * max(0, yB - yA)
+    boxAArea = (boxA[2] - boxA[0]) * (boxA[3] - boxA[1])
+    boxBArea = (boxB[2] - boxB[0]) * (boxB[3] - boxB[1])
+    iou = (
+        interArea / float(boxAArea + boxBArea - interArea)
+        if boxAArea + boxBArea - interArea > 0
+        else 0
+    )
     return iou
 
-def get_tpfpfn(pred, gt, iou_threshold=0.5):
-    """
-    Calculate object detection metric given predictions and ground truth.
-    """
-    num_pred = len(pred)
-    num_gt = len(gt)
-    tp = 0
-    fp = 0
-    fn = 0
-    
-    for pred_box in pred:
-        pred_cls, pred_conf, pred_x, pred_y, pred_w, pred_h = pred_box
-        pred_box_coords = (pred_x, pred_y, pred_w, pred_h)
-        max_iou = 0
-        
-        for gt_box in gt:
-            gt_cls, _, gt_x, gt_y, gt_w, gt_h = gt_box
-            gt_box_coords = (gt_x, gt_y, gt_w, gt_h)
-            
-            if pred_cls == gt_cls:
-                iou = calculate_iou(pred_box_coords, gt_box_coords)
-                if iou > max_iou:
-                    max_iou = iou
-        
-        if max_iou >= iou_threshold:
-            tp += 1
-        else:
-            fp += 1
-    
-    fn = num_gt - tp
-    
-    return tp, fp, fn
 
-def get_prec_rec(tp, fp, fn):
-    precision = tp / (tp + fp) if (tp + fp) > 0 else 0
-    recall = tp / (tp + fn) if (tp + fn) > 0 else 0
-    
-    return precision, recall
+def load_data(file_path, is_prediction):
+    """
+    Load data from a file, differentiating between prediction and ground truth files.
+    """
+    data = []
+    with open(file_path, "r") as file:
+        for line in file:
+            parts = line.strip().split(",")
+            if is_prediction:
+                class_name, prob, x_min, y_min, width, height = (
+                    parts[0],
+                    float(parts[1]),
+                    *map(float, parts[2:]),
+                )
+            else:
+                class_name, x_min, y_min, width, height = parts[0], *map(
+                    float, parts[1:]
+                )
+            x_max, y_max = x_min + width, y_min + height
+            data.append([class_name, x_min, y_min, x_max, y_max])
+    return data
 
-def load_txt(fpath, parser):
-    """Parse a detection line and return class_id, confidence, bbox."""
-    lines = open(fpath).readlines()
-    detections = []
-    for line in lines:
-        parts = line.strip("\n").split(parser)
-        class_id = parts[0]
-        confidence = 1.0
-        if len(parts) == 6:
-            class_id = str(class_dict[class_id])
-            confidence = float(parts[1])        
-        bbox = [float(x) for x in parts[-4:]]
-        detection = tuple([class_id]+[confidence]+bbox)
-        detections.append(detection)
-    return detections
-    
-def parse_args():
-    import argparse
-    parser = argparse.ArgumentParser("argument parser")
-    parser.add_argument("--pred-dir", type=str,     
-                help="It can be a path to image or path to folder of images")
-    parser.add_argument("--gt-dir", type=str, 
-                help="It can be a path to image or path to folder of images")
-    parser.add_argument("--conf", type=float, default=0.5,
-                help="confidence threshold")
-    args = parser.parse_args()
-    return args
+
+def calculate_metrics(predictions, ground_truths):
+    """
+    Calculate precision and recall for each class across all predictions and ground truths.
+    """
+    class_metrics = {}
+    # Filter by class
+    classes = set(pred[0] for pred in predictions).union(gt[0] for gt in ground_truths)
+    # print("pred:", set(pred[0] for pred in predictions))
+    # print("gt:", set(gt[0] for gt in ground_truths))
+
+    for cls in classes:
+        preds = [p for p in predictions if p[0] == cls]
+        gts = [gt for gt in ground_truths if gt[0] == cls]
+        tp, fp, fn = 0, 0, len(gts)
+
+        for pred in preds:
+            matched = False
+            for i, gt in enumerate(gts):
+                if calculate_iou(pred[1:], gt[1:]) >= 0.5:
+                    tp += 1
+                    fn -= 1
+                    matched = True
+                    break
+            if not matched:
+                fp += 1
+
+        precision = tp / (tp + fp) if tp + fp > 0 else 0
+        recall = tp / (tp + fn) if tp + fn > 0 else 0
+        class_metrics[cls] = (precision, recall)
+
+    return class_metrics
+
+
+def evaluate_performance(pred_dir, gt_dir):
+    """
+    Evaluate performance, producing per-class average precision, recall, and F1 score across all file pairs.
+    """
+    pred_files = sorted(
+        [f for f in os.listdir(pred_dir) if os.path.isfile(os.path.join(pred_dir, f))]
+    )
+    gt_files = sorted(
+        [f for f in os.listdir(gt_dir) if os.path.isfile(os.path.join(gt_dir, f))]
+    )
+
+    aggregate_metrics = {}
+
+    for pred_file, gt_file in zip(pred_files, gt_files):
+        pred_path, gt_path = os.path.join(pred_dir, pred_file), os.path.join(
+            gt_dir, gt_file
+        )
+        predictions, ground_truths = load_data(pred_path, True), load_data(
+            gt_path, False
+        )
+        metrics = calculate_metrics(predictions, ground_truths)
+
+        for cls, metrics in metrics.items():
+            precision, recall = metrics
+            f1_score = (
+                2 * (precision * recall) / (precision + recall)
+                if (precision + recall) > 0
+                else 0
+            )
+
+            if cls not in aggregate_metrics:
+                aggregate_metrics[cls] = {"precision": [], "recall": [], "f1": []}
+            aggregate_metrics[cls]["precision"].append(precision)
+            aggregate_metrics[cls]["recall"].append(recall)
+            aggregate_metrics[cls]["f1"].append(f1_score)
+
+    for cls, metrics in aggregate_metrics.items():
+        avg_precision = sum(metrics["precision"]) / len(metrics["precision"])
+        avg_recall = sum(metrics["recall"]) / len(metrics["recall"])
+        avg_f1 = sum(metrics["f1"]) / len(metrics["f1"])
+        print(
+            f"Class: {cls}, Average Precision: {avg_precision:.4f}, Average Recall: {avg_recall:.4f}, Average F1: {avg_f1:.4f}"
+        )
+
 
 if __name__ == "__main__":
-    """
-    run command - 
-    python evaluate.py --pred-dir customVisionOutput --gt-dir ../JSON2YOLO/new_dir/labels/val
-    """    
-    args = parse_args()
-    gt_paths = glob.glob(args.gt_dir + "/*.txt")
-    pred_fnames = os.listdir(args.pred_dir)
-    tps = 0
-    fps = 0
-    fns = 0
-    for gt_path in tqdm(gt_paths):
-        fname = os.path.basename(gt_path)
-        if fname in pred_fnames:
-            gts = load_txt(gt_path, ",")
-            preds = load_txt(os.path.join(args.pred_dir, fname), ",")
-            tp, fp, fn = get_tpfpfn(preds, gts, iou_threshold=0.5)
-            tps += tp
-            fps += fp
-            fns += fn
-    precision, recall = get_prec_rec(tps, fps, fns)
-
-    print("Precision:", precision)
-    print("Recall:", recall)
+    pred_dir_path = "/Users/rishabpal/Downloads/rishabh/imageAnalysisOutput"
+    gt_dir_path = "/Users/rishabpal/Downloads/rishabh/coco_annotations/output/txt_files"
+    evaluate_performance(pred_dir_path, gt_dir_path)

@@ -5,6 +5,7 @@ from PIL import Image
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
+
 def write_predictions(results, out_path):
 
     f = open(out_path, "w")
@@ -18,8 +19,11 @@ def write_predictions(results, out_path):
         y = bbox["top"]
         w = bbox["width"]
         h = bbox["height"]
-        pred_line = ",".join([tag, str(probability), str(x), str(y), str(w), str(h)]) + "\n"
+        pred_line = (
+            ",".join([tag, str(probability), str(x), str(y), str(w), str(h)]) + "\n"
+        )
         f.write(pred_line)
+
 
 def plot(results, img_path):
     # Load image from URL
@@ -108,26 +112,36 @@ def infer(image_path, conf_threshold=0.5, plot=False, out_path="output.txt"):
         print("[Errno {0}] {1}".format(e.errno, e.strerror))
     return len(filtered_preds)
 
+
 def parse_args():
     import argparse
+
     parser = argparse.ArgumentParser("argument parser")
-    parser.add_argument("--source", type=str, 
-                help="It can be a path to image or path to folder of images")
-    parser.add_argument("--conf", type=float, default=0.5,
-                help="confidence threshold")
-    parser.add_argument("--output-dir", type=str, default="customVisionOutput",
-                help="It can be a path to image or path to folder of images")
-    parser.add_argument("--img-ext", type=str, default=".jpg",
-                help="file extension of image files")
+    parser.add_argument(
+        "--source",
+        type=str,
+        help="It can be a path to image or path to folder of images",
+    )
+    parser.add_argument("--conf", type=float, default=0.5, help="confidence threshold")
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        default="customVisionOutput",
+        help="It can be a path to image or path to folder of images",
+    )
+    parser.add_argument(
+        "--img-ext", type=str, default=".jpg", help="file extension of image files"
+    )
     args = parser.parse_args()
     return args
 
+
 if __name__ == "__main__":
     """
-    to run on an image - 
+    to run on an image -
         python customvision_inferenceAPI.py --source <image_path>
-    to run on a folder of images - 
-        python customvision_inferenceAPI.py --source <image_dir>    
+    to run on a folder of images -
+        python customvision_inferenceAPI.py --source <image_dir>
     """
     args = parse_args()
     det_count = 0
@@ -140,7 +154,10 @@ if __name__ == "__main__":
     else:
         img_paths = glob.glob(args.source + f"/*{args.img_ext}")
         for img_path in img_paths:
-            out_path = os.path.join(args.output_dir, os.path.basename(img_path).replace(args.img_ext, ".txt"))
+            out_path = os.path.join(
+                args.output_dir,
+                os.path.basename(img_path).replace(args.img_ext, ".txt"),
+            )
             num_dets = infer(img_path, args.conf, out_path=out_path)
             det_count += num_dets
     print("total detection :: ", det_count)
