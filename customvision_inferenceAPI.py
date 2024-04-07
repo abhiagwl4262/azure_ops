@@ -25,7 +25,7 @@ def write_predictions(results, out_path):
         f.write(pred_line)
 
 
-def plot(results, img_path):
+def plot_preds(results, img_path, save_path):
     # Load image from URL
     image = Image.open(img_path)
 
@@ -72,12 +72,12 @@ def plot(results, img_path):
         )
 
     plt.axis("off")
-    plt.show()
+    plt.savefig(save_path)
 
 
-def infer(image_path, conf_threshold=0.5, plot=False, out_path="output.txt"):
-    prediction_url = "https://customobjectdetection-prediction.cognitiveservices.azure.com/customvision/v3.0/Prediction/8f29a6c3-5b39-4999-92b6-e5d9f3573ec9/detect/iterations/Iteration%204/image"
-
+def infer(image_path, conf_threshold=0.5, plot=False, out_path="output.txt", out_image_path="output.png"):
+    # prediction_url = "https://customobjectdetection-prediction.cognitiveservices.azure.com/customvision/v3.0/Prediction/8f29a6c3-5b39-4999-92b6-e5d9f3573ec9/detect/iterations/Iteration%204/image"
+    prediction_url = "https://customobjectdetection-prediction.cognitiveservices.azure.com/customvision/v3.0/Prediction/8f29a6c3-5b39-4999-92b6-e5d9f3573ec9/detect/iterations/Iteration5/image"
     headers = {
         # Request headers
         "Content-Type": "application/octet-stream",
@@ -88,7 +88,6 @@ def infer(image_path, conf_threshold=0.5, plot=False, out_path="output.txt"):
     print(image_path)
     with open(image_path, "rb") as image_file:
         data = image_file.read()
-
     try:
         response = requests.post(prediction_url, data=data, headers=headers)
         if response.status_code == 200:
@@ -96,13 +95,13 @@ def infer(image_path, conf_threshold=0.5, plot=False, out_path="output.txt"):
             results = json.loads(response.content.decode("utf-8"))
             filtered_preds = []
             for i, prediction in enumerate(results["predictions"]):
-                if prediction["probability"] >= conf_threshold:
+                if prediction["probability"] >= conf_threshold and prediction['tagName'] != "bg":
                     filtered_preds.append(prediction)
                     print(
                         f"Tag: {prediction['tagName']}, Probability: {prediction['probability']}"
                     )
             if plot:
-                plot(filtered_preds, image_path)
+                plot_preds(filtered_preds, image_path, out_image_path)
             write_predictions(filtered_preds, out_path)
         else:
             print(
@@ -141,23 +140,28 @@ if __name__ == "__main__":
     to run on an image -
         python customvision_inferenceAPI.py --source <image_path>
     to run on a folder of images -
-        python customvision_inferenceAPI.py --source <image_dir>
+        python customvision_inferenceAPI.py --source <image_dir> --img-ext .png
     """
     args = parse_args()
     det_count = 0
-
-    os.makedirs(args.output_dir, exist_ok=True)
+    pred_dir = os.path.join(args.output_dir, "preds")
+    plot_dir = os.path.join(args.output_dir, "plots")
+    os.makedirs(pred_dir, exist_ok=True)
+    os.makedirs(plot_dir, exist_ok=True)
     if not os.path.isdir(args.source):
         out_path = os.path.join(args.output_dir, args.source.replace(".jpeg", ".txt"))
-        num_dets = infer(args.source, args.conf, out_path=out_path)
+        num_dets = infer(args.source, args.conf, out_path=out_path, plot=True)
         det_count += num_dets
     else:
         img_paths = glob.glob(args.source + f"/*{args.img_ext}")
         for img_path in img_paths:
             out_path = os.path.join(
-                args.output_dir,
+                pred_dir,
                 os.path.basename(img_path).replace(args.img_ext, ".txt"),
             )
-            num_dets = infer(img_path, args.conf, out_path=out_path)
+            out_image_path = os.path.join(
+                plot_dir, os.path.basename(img_path)
+            )
+            num_dets = infer(img_path, args.conf, out_path=out_path, plot=True, out_image_path=out_image_path)
             det_count += num_dets
     print("total detection :: ", det_count)
